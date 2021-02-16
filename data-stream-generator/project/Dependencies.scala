@@ -17,7 +17,7 @@ object Dependencies {
 	val rootDependencies: Seq[ModuleID] = Seq(
 		"com.typesafe" % "config" % Versions.typeSafe,
 		"io.dropwizard.metrics" % "metrics-core" % Versions.dropwizardMetrics,
-		"org.apache.kafka" % s"kafka_${Versions.scalaBinary}" % Versions.kafka,
+		//"org.apache.kafka" % s"kafka_${Versions.scalaBinary}" % Versions.kafka,
 		"ch.qos.logback" % "logback-classic" % Versions.logback,
 		"org.apache.hadoop" % "hadoop-aws" % "3.0.0-alpha2",
 		"org.apache.hadoop" % "hadoop-hdfs" % "2.8.1"

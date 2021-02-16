@@ -56,6 +56,8 @@ class SingleBurstPublisher(sparkSession: SparkSession, kafkaProperties: Properti
     logger.info("will sleep before starting publishing: " + sleepTimeBeforeStartTimeSecond + " millis")
     Thread.sleep(sleepTimeBeforeStartTimeSecond)
 
+    var triggered = false
+
     fileOrderedDF.foreach { groupOfObservations: ((Long, Iterable[Observation])) => // SUPPOSED TO LAST ONE SECOND
       // set the values of when the sending should end for this batch
       next5MS = nextSecond + 5
@@ -70,6 +72,10 @@ class SingleBurstPublisher(sparkSession: SparkSession, kafkaProperties: Properti
         sendMessages(ConfigUtils.dataVolume.toInt, listOfObservationsOfThisTimestamp, smallGroupsList)
       } // if already running for more than 5 minutes than just send one flow and speed message per second
       else {
+        if(!triggered){
+          triggered = true
+          logger.info("start slow rate")
+        }
         sendMessages(0, listOfObservationsOfThisTimestamp, smallGroupsList)
       }
     }
@@ -86,7 +92,11 @@ class SingleBurstPublisher(sparkSession: SparkSession, kafkaProperties: Properti
                   index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                   observation.replaceTimestampWithCurrentTimestamp().message
                 )
-                producer.send(msg)
+                if(ConfigUtils.rdma){
+                  producer.RDMAsend(msg)
+                }else{
+                  producer.send(msg)
+                }
               } else {
                 if(ConfigUtils.lastStage < 100 ) { // if the stage is equal to or larger than 100 then it needs only one input stream
                   speedStats.mark()
@@ -95,7 +105,11 @@ class SingleBurstPublisher(sparkSession: SparkSession, kafkaProperties: Properti
                     index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                     observation.replaceTimestampWithCurrentTimestamp().message
                   )
-                  producer.send(msg)
+                  if(ConfigUtils.rdma){
+                    producer.RDMAsend(msg)
+                  }else{
+                    producer.send(msg)
+                  }
                 }
               }
             }

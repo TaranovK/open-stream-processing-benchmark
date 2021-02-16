@@ -72,7 +72,11 @@ class FaultyEventPublisher(sparkSession: SparkSession, kafkaProperties: Properti
                   "flowERROR"
                 )
                 logger.warn("Errounous event send!!!!")
-                producer.send(msg)
+                if(ConfigUtils.rdma){
+                  producer.RDMAsend(msg)
+                }else{
+                  producer.send(msg)
+                }
               } else {
                 if (observation.message.contains("flow")) {
                   flowStats.mark()
@@ -81,7 +85,11 @@ class FaultyEventPublisher(sparkSession: SparkSession, kafkaProperties: Properti
                     index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                     observation.replaceTimestampWithCurrentTimestamp().message
                   )
-                  producer.send(msg)
+                  if(ConfigUtils.rdma){
+                    producer.RDMAsend(msg)
+                  }else{
+                    producer.send(msg)
+                  }
                 } else {
                   if (ConfigUtils.lastStage < 100) { // if the stage is equal to or larger than 100 then it needs only one input stream
                     speedStats.mark()
@@ -90,7 +98,11 @@ class FaultyEventPublisher(sparkSession: SparkSession, kafkaProperties: Properti
                       index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                       observation.replaceTimestampWithCurrentTimestamp().message
                     )
-                    producer.send(msg)
+                    if(ConfigUtils.rdma){
+                      producer.RDMAsend(msg)
+                    }else{
+                      producer.send(msg)
+                    }
                   }
                 }
               }

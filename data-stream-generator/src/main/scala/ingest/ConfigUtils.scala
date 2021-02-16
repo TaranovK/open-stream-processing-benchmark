@@ -26,4 +26,7 @@ object ConfigUtils extends Serializable {
   lazy val s3Path: String = configProperties.getString("aws.s3.path")
   lazy val s3AccessKey: String = configProperties.getString("aws.s3.access.key")
   lazy val s3SecretKey: String = configProperties.getString("aws.s3.secret.key")
+
+  lazy val rdma: Boolean = generalConfigProps.getString("run.rdma").equals("true")
+  lazy val publishers: Int = generalConfigProps.getInt("run.publishers")
 }

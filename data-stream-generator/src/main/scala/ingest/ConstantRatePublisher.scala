@@ -38,6 +38,12 @@ class ConstantRatePublisher(sparkSession: SparkSession, kafkaProperties: Propert
       Observation(timestampOfObservation, measurementId, msg)
     }.groupBy(_.timestamp).sortBy(_._1).collect().toList
 
+
+  /*  try {
+      val producer = new KafkaProducer(kafkaProperties, new StringSerializer, new StringSerializer)
+    } catch {
+      case e: Exception => println("Had an Exception" + e)
+    }*/
     val producer = new KafkaProducer(kafkaProperties, new StringSerializer, new StringSerializer)
 
     val thisSecond = 1000 * Math.round(System.currentTimeMillis() / 1000.0)
@@ -68,7 +74,13 @@ class ConstantRatePublisher(sparkSession: SparkSession, kafkaProperties: Propert
                   index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                   observation.replaceTimestampWithCurrentTimestamp().message
                 )
-                producer.send(msg)
+
+                if(ConfigUtils.rdma){
+                  producer.RDMAsend(msg)
+                }else{
+                  producer.send(msg)
+                }
+
               } else {
                 if(ConfigUtils.lastStage < 100 ) { // if the stage is equal to or larger than 100 then it needs only one input stream
                   speedStats.mark()
@@ -77,7 +89,12 @@ class ConstantRatePublisher(sparkSession: SparkSession, kafkaProperties: Propert
                     index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                     observation.replaceTimestampWithCurrentTimestamp().message
                   )
-                  producer.send(msg)
+                  msg.partition()
+                  if(ConfigUtils.rdma){
+                    producer.RDMAsend(msg)
+                  }else{
+                    producer.send(msg)
+                  }
                 }
               }
             }

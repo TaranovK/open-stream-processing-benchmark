@@ -60,7 +60,7 @@ class PeriodicBurstPublisher(sparkSession: SparkSession, kafkaProperties: Proper
       val burstNeedsToBeSend = (timestamp % 600000) == 0
 
       if (burstNeedsToBeSend) {
-        logger.debug("burst will be send for timestamp " + timestamp)
+        logger.info("burst will be send for timestamp " + timestamp)
 
         publishBurst(index, listOfObservationsOfThisTimestamp, producer)
         logger.debug("finished burst for timestamp " + timestamp, thisSecond)
@@ -100,7 +100,11 @@ class PeriodicBurstPublisher(sparkSession: SparkSession, kafkaProperties: Proper
                 ConfigUtils.flowTopic,
                 index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                 observation.replaceTimestampWithCurrentTimestamp().message)
-              producer.send(msg)
+              if(ConfigUtils.rdma){
+                producer.RDMAsend(msg)
+              }else{
+                producer.send(msg)
+              }
             } else {
               if(ConfigUtils.lastStage < 100 ) { // if the stage is larger than 100 then it needs only one input stream
                 speedStats.mark()
@@ -108,7 +112,11 @@ class PeriodicBurstPublisher(sparkSession: SparkSession, kafkaProperties: Proper
                   ConfigUtils.speedTopic,
                   index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                   observation.replaceTimestampWithCurrentTimestamp().message)
-                producer.send(msg)
+                if(ConfigUtils.rdma){
+                  producer.RDMAsend(msg)
+                }else{
+                  producer.send(msg)
+                }
               }
             }
           }
@@ -140,7 +148,11 @@ class PeriodicBurstPublisher(sparkSession: SparkSession, kafkaProperties: Proper
               ConfigUtils.flowTopic,
               index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
               observation.replaceTimestampWithCurrentTimestamp().message)
-            producer.send(msg)
+            if(ConfigUtils.rdma){
+              producer.RDMAsend(msg)
+            }else{
+              producer.send(msg)
+            }
           } else {
             if(ConfigUtils.lastStage < 100 ) { // if the stage is equal to or larger than 100 then it needs only one input stream
               speedStats.mark()
@@ -148,7 +160,11 @@ class PeriodicBurstPublisher(sparkSession: SparkSession, kafkaProperties: Proper
                 ConfigUtils.speedTopic,
                 index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                 observation.replaceTimestampWithCurrentTimestamp().message)
-              producer.send(msg)
+              if(ConfigUtils.rdma){
+                producer.RDMAsend(msg)
+              }else{
+                producer.send(msg)
+              }
             }
           }
         }

@@ -1,14 +1,18 @@
 package ingest
 
+import org.apache.kafka.clients.admin.NewTopic
+
 import java.util.Properties
 import java.util.concurrent.Executors
-
 import org.apache.spark.sql.SparkSession
 import org.slf4j.LoggerFactory
 
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.util.Try
+import org.apache.kafka.clients.{CommonClientConfigs, admin}
+import scala.collection.JavaConverters._
+import java.util
 
 /**
  * Produces a stream on Kafka
@@ -36,8 +40,22 @@ object StreamProducer extends App {
   kafkaProperties.setProperty("bootstrap.servers", ConfigUtils.kafkaBootstrapServers)
   kafkaProperties.setProperty("linger.ms", "20")
   //  kafkaProperties.setProperty("batch.size", "8000")
+  val publishers = ConfigUtils.publishers
 
-  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(3))
+  def createTopicss(props: Properties): Unit = {
+    println("Will create topic with %d partition(s) and replication factor = %d"
+      .format( 1, 1))
+
+    val adminClient = admin.AdminClient.create(props)
+    val newTopic1 = new NewTopic(ConfigUtils.speedTopic, 1, 1)
+    val newTopic2 = new NewTopic(ConfigUtils.flowTopic, 1, 1)
+    adminClient.createTopics(Seq(newTopic1,newTopic2).asJava).all().get()
+    //adminClient.createTopics(List(newTopic1,newTopic2)).all().get()
+    println("Done")
+  }
+
+
+  implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(publishers+1))
 
   val publisherImpl: Publisher = {
     if (ConfigUtils.mode == "single-burst") {
@@ -52,10 +70,13 @@ object StreamProducer extends App {
       throw new RuntimeException(s"Unsupported app mode ${ConfigUtils.mode}.")
     }
   }
-  val ndwPublishers = 0.to(2).map(index => publisherImpl.publish(index: Int))
+  val ndwPublishers = 0.to(publishers-1).map(index => publisherImpl.publish(index: Int))
+
+  val readers = new EventReader(kafkaProperties).start;
 
   // wait for all ingesters to complete
   Await.ready(Future.sequence(ndwPublishers), Duration.Inf)
+  Await.ready(readers, Duration.Inf)
 
   logger.info("END OF FILE")
   Thread.sleep(60000 * 3)

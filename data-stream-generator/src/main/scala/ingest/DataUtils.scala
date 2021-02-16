@@ -13,6 +13,9 @@ object DataUtils extends Serializable {
 
   def extractTimestamp(line: String): Long = getTime(line.split("\"timestamp\":\"")(1).substring(0, line.split("\"timestamp\":\"")(1).indexOf("\"")))
 
+  def extractNano(line: String): Long = line.split("\"timestamp\":\"")(1).substring(0, line.split("\"timestamp\":\"")(1).indexOf("\"")).toLong
+
+
   def splitLineInKeyAndValue(line: String): (String, String) = {
     val splittedLine = line.split("=")
     (splittedLine(0), splittedLine(1).replace(" ", ""))
@@ -35,9 +38,9 @@ case class Observation(timestamp: Long, key: String, message: String) extends Se
   def replaceTimestampWithCurrentTimestamp(): Observation = {
     val timestampToReplace: String = message.split("\"timestamp\":\"")(1).substring(0, message.split("\"timestamp\":\"")(1).indexOf("\""))
 
-    val dateFormat: DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-    val currentTimeString: String = dateFormat.format(new Timestamp(1000 * Math.round(System.currentTimeMillis()/1000.0)))
-    val newMsg = message.replaceFirst(timestampToReplace, currentTimeString)
+    //val dateFormat: DateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+   // val currentTimeString: String = dateFormat.format(new Timestamp(System.nanoTime()))
+    val newMsg = message.replaceFirst(timestampToReplace, System.nanoTime().toString)
     Observation(timestamp, key, newMsg)
   }
 }
