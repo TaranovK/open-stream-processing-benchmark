@@ -27,3 +27,11 @@ To run do:
 
     sbt compile
     sbt run
+
+
+For RDMA compile using scala 2.11 and Java 1.8:   
+    sbt compile
+    sbt clean assembly
+
+To run use Java 11 deu to Kafka dependency:
+    java -jar target/scala-2.11/ndw-publisher-assembly-3.0.jar
