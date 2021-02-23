@@ -1,7 +1,7 @@
 import sbt.Keys.javaOptions
 
 name := "ndw-publisher"
-
+retrieveManaged := true
 version := "3.0"
 
 scalaVersion := "2.11.8"
@@ -15,6 +15,7 @@ libraryDependencies ++= Dependencies.rootDependencies
 
 assemblyMergeStrategy in assembly := {
 	case PathList("META-INF", "MANIFEST.MF") => MergeStrategy.discard
+	case PathList("META-INF", xs @ _*) => MergeStrategy.discard
 	case _ => MergeStrategy.first
 }
 mainClass in assembly := Some("ingest.StreamProducer")

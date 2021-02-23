@@ -15,7 +15,7 @@ import scala.collection.JavaConverters._
 
 class EventReader( kafkaProperties: Properties) {
   private val timeout: Long = 10000*1000000
-  val latencies = new Array[Long](500000)
+  val latencies = new Array[Float](500000)
 
   def start = Future {
     val consumer = new KafkaConsumer[String, String](kafkaProperties, new StringDeserializer, new StringDeserializer)
@@ -35,6 +35,8 @@ class EventReader( kafkaProperties: Properties) {
     var i:Long = 0L
     var j:Int = 0
 
+    var averageTime: Float = 0.0f
+
     while( currentTimeNanos - lastConsumedTime <= timeout){
       val records = if (ConfigUtils.rdma){
         consumer.RDMApoll(Duration.ofMillis(100)).asScala
@@ -48,10 +50,12 @@ class EventReader( kafkaProperties: Properties) {
       }
       for (record <- records) {
         val elapsed = currentTimeNanos - extractNano(record.value())
-        if (i % 1000 == 0)
-          println(i + "\t" + elapsed / 1000.0 + " us")
-        if (i % 100 == 0) { // sampling
-          latencies(j) = elapsed
+        averageTime+=(elapsed/1000.0f)
+        i = i + 1
+        if (i % 1000 == 0) {
+          println(i + "\t" + averageTime/ 1000.0f + " us")
+          latencies(j) = averageTime/ 1000.0f
+          averageTime = 0.0f
           j=j+1
           if (j == 500000) {
             println("Done batch ")
@@ -60,7 +64,7 @@ class EventReader( kafkaProperties: Properties) {
             j=0;
           }
         }
-        i = i + 1
+
       }
     }
     logger.info("END OF REader")

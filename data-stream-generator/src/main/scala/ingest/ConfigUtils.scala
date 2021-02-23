@@ -29,4 +29,8 @@ object ConfigUtils extends Serializable {
 
   lazy val rdma: Boolean = generalConfigProps.getString("run.rdma").equals("true")
   lazy val publishers: Int = generalConfigProps.getInt("run.publishers")
+
+  lazy val numPartitions: Int = configProperties.getInt("kafka.partitions")
+  lazy val replicas: Short = configProperties.getInt("kafka.replicas").toShort
+
 }

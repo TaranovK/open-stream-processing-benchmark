@@ -45,7 +45,6 @@ class ConstantRatePublisher(sparkSession: SparkSession, kafkaProperties: Propert
       case e: Exception => println("Had an Exception" + e)
     }*/
     val producer = new KafkaProducer(kafkaProperties, new StringSerializer, new StringSerializer)
-
     val thisSecond = 1000 * Math.round(System.currentTimeMillis() / 1000.0)
     var nextSecond = thisSecond + 1000
     var next100Ms = nextSecond + 100

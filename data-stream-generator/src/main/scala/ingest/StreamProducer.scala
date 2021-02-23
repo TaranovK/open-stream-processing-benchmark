@@ -42,18 +42,21 @@ object StreamProducer extends App {
   //  kafkaProperties.setProperty("batch.size", "8000")
   val publishers = ConfigUtils.publishers
 
+
+
   def createTopicss(props: Properties): Unit = {
     println("Will create topic with %d partition(s) and replication factor = %d"
       .format( 1, 1))
 
     val adminClient = admin.AdminClient.create(props)
-    val newTopic1 = new NewTopic(ConfigUtils.speedTopic, 1, 1)
-    val newTopic2 = new NewTopic(ConfigUtils.flowTopic, 1, 1)
+    val newTopic1 = new NewTopic(ConfigUtils.speedTopic, ConfigUtils.numPartitions, ConfigUtils.replicas)
+    val newTopic2 = new NewTopic(ConfigUtils.flowTopic, ConfigUtils.numPartitions, ConfigUtils.replicas)
     adminClient.createTopics(Seq(newTopic1,newTopic2).asJava).all().get()
     //adminClient.createTopics(List(newTopic1,newTopic2)).all().get()
-    println("Done")
+    println("Done creating topics")
   }
 
+  createTopicss(kafkaProperties)
 
   implicit val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(publishers+1))
 

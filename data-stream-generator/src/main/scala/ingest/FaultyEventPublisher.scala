@@ -29,6 +29,8 @@ class FaultyEventPublisher(sparkSession: SparkSession, kafkaProperties: Properti
       sparkSession.sparkContext.textFile(ConfigUtils.s3Path)
     }
 
+    val targetPart = index ;
+
     val fileOrderedDF = rawFile.map { observation =>
       val (keyLine, observationLine) = DataUtils.splitLineInKeyAndValue(observation)
       val timestampOfObservation = DataUtils.extractTimestamp(observation)
@@ -81,7 +83,7 @@ class FaultyEventPublisher(sparkSession: SparkSession, kafkaProperties: Properti
                 if (observation.message.contains("flow")) {
                   flowStats.mark()
                   val msg = new ProducerRecord[String, String](
-                    ConfigUtils.flowTopic,
+                    ConfigUtils.flowTopic, targetPart,
                     index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                     observation.replaceTimestampWithCurrentTimestamp().message
                   )
@@ -94,7 +96,7 @@ class FaultyEventPublisher(sparkSession: SparkSession, kafkaProperties: Properti
                   if (ConfigUtils.lastStage < 100) { // if the stage is equal to or larger than 100 then it needs only one input stream
                     speedStats.mark()
                     val msg = new ProducerRecord[String, String](
-                      ConfigUtils.speedTopic,
+                      ConfigUtils.speedTopic, targetPart ,
                       index + ConfigUtils.publisherNb + microBatch.toString + volumeIteration.toString + observation.key,
                       observation.replaceTimestampWithCurrentTimestamp().message
                     )
